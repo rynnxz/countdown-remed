@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Countdown Remedial UTS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#111a3a;
+      --stroke:#263b7a;
+      --text:#eef2ff;
+      --muted:#9aa7c7;
+      --accent:#6ea8ff;
+      --ok:#2effcd;
+      --danger:#ff6b6b;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      font-family:system-ui,Segoe UI,Roboto,Arial;
+      background:
+        radial-gradient(800px 600px at 20% 10%,rgba(110,168,255,.18),transparent 60%),
+        radial-gradient(900px 700px at 80% 90%,rgba(46,255,205,.12),transparent 60%),
+        linear-gradient(180deg,#060912,#0b1020);
+      color:var(--text);
+    }
+
+    .card{
+      width:min(880px,94%);
+      background:rgba(17,26,58,.88);
+      border:1px solid var(--stroke);
+      border-radius:22px;
+      padding:30px;
+      box-shadow:0 30px 80px rgba(0,0,0,.45);
+      text-align:center;
+    }
+
+    h1{
+      margin:0 0 10px;
+      font-size:clamp(22px,3vw,32px);
+    }
+
+    p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.5;
+    }
+
+    .countdown{
+      margin-top:32px;
+      display:flex;
+      justify-content:center;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+
+    .unit{
+      min-width:140px;
+    }
+
+    .label{
+      font-size:12px;
+      letter-spacing:.12em;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+
+    .digit{
+      height:96px;
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background:linear-gradient(180deg,#0e1533,#070b1f);
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:center;
+      padding:10px;
+    }
+
+    .slot{
+      width:44px;
+      height:78px;
+      overflow:hidden;
+      border-radius:14px;
+      background:#00000022;
+      position:relative;
+    }
+
+    .stack{
+      position:absolute;
+      top:0;left:0;
+      width:100%;
+      transition:transform .45s cubic-bezier(.2,.9,.2,1);
+    }
+
+    .num{
+      height:78px;
+      display:grid;
+      place-items:center;
+      font-size:42px;
+      font-weight:800;
+    }
+
+    .status{
+      margin-top:34px;
+      font-size:26px;
+      font-weight:800;
+      letter-spacing:.04em;
+    }
+
+    .status.ready{color:var(--ok)}
+    .status.end{color:var(--danger)}
+
+    .progress{
+      margin-top:26px;
+      height:12px;
+      border-radius:999px;
+      background:#ffffff14;
+      overflow:hidden;
+      border:1px solid #ffffff1f;
+    }
+
+    .bar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,var(--accent),var(--ok));
+      transition:width .4s ease;
+    }
+  </style>
+</head>
+
+<body>
+<main class="card">
+  <h1>Countdown Remedial UTS Pemrograman Dasar</h1>
+  <p>
+    Timer ini menghitung mundur waktu menuju pelaksanaan remedial UTS mata kuliah
+    <strong>Pemrograman Dasar</strong>. Pastikan kamu telah bersiap sebelum waktu berakhir.
+  </p>
+
+  <section class="countdown" id="countdown">
+    <div class="unit"><div class="label">HARI</div><div class="digit" id="d_days"></div></div>
+    <div class="unit"><div class="label">JAM</div><div class="digit" id="d_hours"></div></div>
+    <div class="unit"><div class="label">MENIT</div><div class="digit" id="d_minutes"></div></div>
+    <div class="unit"><div class="label">DETIK</div><div class="digit" id="d_seconds"></div></div>
+  </section>
+
+  <div class="progress"><div class="bar" id="bar"></div></div>
+
+  <div class="status" id="statusText"></div>
+</main>
+
+<script>
+  const pad2=n=>String(n).padStart(2,"0");
+
+  function slotDigit(char){
+    const s=document.createElement("div");
+    s.className="slot";
+    const stack=document.createElement("div");
+    stack.className="stack";
+    const a=document.createElement("div");
+    const b=document.createElement("div");
+    a.className=b.className="num";
+    a.textContent=b.textContent=char;
+    stack.append(a,b);
+    s.append(stack);
+    s.stack=stack;
+    s.current=char;
+    return s;
+  }
+
+  function mount(el,count){
+    const slots=[];
+    for(let i=0;i<count;i++){
+      const s=slotDigit("0");
+      el.append(s);
+      slots.push(s);
+    }
+    return slots;
+  }
+
+  function setSlot(slot,val){
+    if(slot.current===val)return;
+    slot.stack.children[0].textContent=slot.current;
+    slot.stack.children[1].textContent=val;
+    slot.stack.style.transform="translateY(0)";
+    slot.stack.getBoundingClientRect();
+    slot.stack.style.transform="translateY(-78px)";
+    slot.current=val;
+  }
+
+  function setDigits(slots,str){
+    [...str].forEach((c,i)=>setSlot(slots[i],c));
+  }
+
+  const daysEl=mount(d_days,2);
+  const hoursEl=mount(d_hours,2);
+  const minsEl=mount(d_minutes,2);
+  const secsEl=mount(d_seconds,2);
+
+  // ===== WAKTU TETAP =====
+  const start = new Date();
+  start.setDate(start.getDate() - ((start.getDay()+4)%7));
+  start.setHours(15,0,0,0); // Rabu 15:00
+
+  const target = new Date(start);
+  target.setDate(start.getDate()+3);
+  target.setHours(12,0,0,0); // Sabtu 12:00
+
+  function tick(){
+    const now=new Date();
+    const isSunday = now.getDay() === 0;
+
+    if(isSunday){
+      countdown.style.display="none";
+      statusText.textContent="EVENT TELAH BERAKHIR";
+      statusText.className="status end";
+      bar.style.width="100%";
+      return;
+    }
+
+    const left=target-now;
+    if(left<=0){
+      countdown.style.display="none";
+      statusText.textContent="SUDAH SAATNYA REMEDIAL";
+      statusText.className="status ready";
+      bar.style.width="100%";
+      return;
+    }
+
+    const total=target-start;
+    const elapsed=total-left;
+
+    const s=Math.floor(left/1000);
+    setDigits(daysEl,pad2(Math.floor(s/86400)));
+    setDigits(hoursEl,pad2(Math.floor(s%86400/3600)));
+    setDigits(minsEl,pad2(Math.floor(s%3600/60)));
+    setDigits(secsEl,pad2(s%60));
+
+    bar.style.width=Math.round(elapsed/total*100)+"%";
+    statusText.textContent="";
+  }
+
+  tick();
+  setInterval(tick,1000);
+</script>
+</body>
+</html>
